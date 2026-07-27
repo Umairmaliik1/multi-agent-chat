@@ -1,0 +1,24 @@
+# Backend Dockerfile
+# Build a lightweight Node.js image for the Express API server
+FROM node:20-alpine
+
+# Create app directory
+WORKDIR /app
+
+# Install only production dependencies
+# Copy package manifests first to leverage Docker layer cache
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Copy server source code
+COPY server ./server
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=4000
+
+# Expose API port
+EXPOSE 4000
+
+# Start the API server
+CMD ["node", "server/index.js"]

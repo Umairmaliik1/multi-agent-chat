@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: multi_agent_backend
+    environment:
+      - DATABASE_URL=postgres://${DATABASE_USER}:${DATABASE_PASS}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+      - PORT=${SERVER_PORT}
+      - NODE_ENV=${NODE_ENV}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_FIRST_NAME=${ADMIN_FIRST_NAME}
+      - ADMIN_LAST_NAME=${ADMIN_LAST_NAME}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        # The browser must reach the backend via host port mapping
+        VITE_API_BASE: ${VITE_API_BASE}
+    container_name: multi_agent_frontend
+    ports:
+      - "${FRONTEND_PORT}:8081"
+    depends_on:
+      - backend
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

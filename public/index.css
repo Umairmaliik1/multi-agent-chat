@@ -1,0 +1,10 @@
+/* Public stylesheet served at /index.css
+   This file exists to satisfy index.html reference and to host any global overrides.
+   Tailwind is loaded via CDN in index.html, so this can be minimal. */
+
+/* Example: smooth font rendering and base body styles (non-intrusive) */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { margin: 0;     height: 100vh;
+   overflow-y: scroll; }
+
+/* You can add custom global styles below as needed. */

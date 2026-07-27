@@ -1,0 +1,53 @@
+# Frontend Dockerfile (Vite build + Nginx serve)
+# 1) Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy all sources required for the build
+COPY . .
+
+# Build-time API base URL for the browser app
+# You can override during docker build with --build-arg VITE_API_BASE=...
+ARG VITE_API_BASE=http://localhost:4000
+ENV VITE_API_BASE=${VITE_API_BASE}
+
+# Build static site
+RUN npm run build
+
+# 2) Runtime stage
+FROM nginx:1.27-alpine AS runtime
+
+# Copy build artifacts
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Provide a default Nginx config optimized for a single-page app
+# Enables client-side routing by falling back to index.html
+COPY <<'EOF' /etc/nginx/conf.d/default.conf
+server {
+  listen 8081;
+  server_name _;
+
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location / {
+    # Try to serve file directly, then fallback to index.html
+    try_files $uri /index.html;
+  }
+
+  # Optional: serve static assets with long cache
+  location ~* \.(?:css|js|woff2?|ttf|eot|ico|png|jpg|jpeg|gif|svg)$ {
+    try_files $uri =404;
+    expires 7d;
+    access_log off;
+    add_header Cache-Control "public";
+  }
+}
+EOF
+
+EXPOSE 8081
+CMD ["nginx", "-g", "daemon off;"]
